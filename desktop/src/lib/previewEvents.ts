@@ -22,14 +22,20 @@ export async function subscribePreviewEvents(sessionId: string): Promise<() => v
         attachments: [{ type: 'image', name: `screenshot-${kindLabel(msg.kind)}.png`, mimeType: 'image/png', data: msg.dataUrl }],
       })
     }
-    else if (msg.type === 'selection' && msg.payload) {
-      const p = msg.payload as SelectionPayload & { screenshot?: { dataUrl?: string; kind?: string } }
+    else if (msg.type === 'selection') {
+      // 选区事件意味着页面侧已结束一次性拾取——同步关闭宿主侧 picker 态，避免按钮卡在按下态
+      store.setPicker(sessionId, false)
+      const p = msg.payload as (SelectionPayload & { screenshot?: { dataUrl?: string; kind?: string } }) | undefined
+      if (!p || typeof p !== 'object' || !p.element) return
       useChatStore.getState().queueComposerPrefill(sessionId, {
         text: buildSelectionComposerText(p),
         attachments: p.screenshot?.dataUrl
           ? [{ type: 'image', name: 'selection.png', mimeType: 'image/png', data: p.screenshot.dataUrl }]
           : [],
       })
+    }
+    else if (msg.type === 'error') {
+      console.warn('[preview-agent]', msg)
     }
   })
 }

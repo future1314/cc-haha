@@ -36,4 +36,20 @@ describe('subscribePreviewEvents', () => {
       attachments: [expect.objectContaining({ type: 'image', data: 'data:image/png;base64,AAAA' })],
     }))
   })
+
+  it('selection event resets pickerActive on the session', async () => {
+    useBrowserPanelStore.getState().open('s1', 'http://x/a')
+    useBrowserPanelStore.getState().setPicker('s1', true)
+    await subscribePreviewEvents('s1')
+    listeners['preview://event']!({ payload: JSON.stringify({ v: 1, type: 'selection', payload: { pageUrl: 'http://x/', element: { selector: '#t', tag: 'h1', classes: [] }, screenshot: { dataUrl: 'data:image/png;base64,AAAA', kind: 'element' } } }) })
+    expect(useBrowserPanelStore.getState().bySession['s1']!.pickerActive).toBe(false)
+  })
+
+  it('ignores a malformed selection payload without throwing but still resets picker', async () => {
+    useBrowserPanelStore.getState().open('s1', 'http://x/a')
+    useBrowserPanelStore.getState().setPicker('s1', true)
+    await subscribePreviewEvents('s1')
+    expect(() => listeners['preview://event']!({ payload: JSON.stringify({ v: 1, type: 'selection', payload: { pageUrl: 'http://x/' } }) })).not.toThrow()
+    expect(useBrowserPanelStore.getState().bySession['s1']!.pickerActive).toBe(false)
+  })
 })
