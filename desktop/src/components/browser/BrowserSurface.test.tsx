@@ -14,10 +14,13 @@ vi.mock('@tauri-apps/api/event', () => ({ listen: () => Promise.resolve(() => {}
 
 import { BrowserSurface } from './BrowserSurface'
 import { useBrowserPanelStore } from '../../stores/browserPanelStore'
+import { useWorkspacePanelStore } from '../../stores/workspacePanelStore'
 
 afterEach(() => {
   Object.values(bridge).forEach((f) => f.mockReset())
   useBrowserPanelStore.setState(useBrowserPanelStore.getInitialState(), true)
+  // browserPanelStore.open() now also opens the unified workbench; keep it isolated.
+  useWorkspacePanelStore.setState(useWorkspacePanelStore.getInitialState(), true)
 })
 
 describe('BrowserSurface', () => {

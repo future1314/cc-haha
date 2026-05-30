@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useBrowserPanelStore } from './browserPanelStore'
+import { useWorkspacePanelStore } from './workspacePanelStore'
 
-const reset = () => useBrowserPanelStore.setState(useBrowserPanelStore.getInitialState(), true)
+const reset = () => {
+  useBrowserPanelStore.setState(useBrowserPanelStore.getInitialState(), true)
+  useWorkspacePanelStore.setState(useWorkspacePanelStore.getInitialState(), true)
+}
 
 describe('browserPanelStore', () => {
   beforeEach(reset)
@@ -81,5 +85,17 @@ describe('browserPanelStore', () => {
     expect(useBrowserPanelStore.getState().bySession['s1']!.loading).toBe(true)
     st.setReady('s1')
     expect(useBrowserPanelStore.getState().bySession['s1']!.loading).toBe(false)
+  })
+
+  it('open surfaces the unified workbench in browser mode', () => {
+    // Panel starts closed and defaults to the workspace (file) mode.
+    expect(useWorkspacePanelStore.getState().isPanelOpen('s1')).toBe(false)
+    expect(useWorkspacePanelStore.getState().getMode('s1')).toBe('workspace')
+
+    useBrowserPanelStore.getState().open('s1', 'http://localhost:5173/')
+
+    // Opening a browser target opens the shared workbench in browser mode.
+    expect(useWorkspacePanelStore.getState().isPanelOpen('s1')).toBe(true)
+    expect(useWorkspacePanelStore.getState().getMode('s1')).toBe('browser')
   })
 })

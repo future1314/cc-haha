@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useWorkspacePanelStore } from './workspacePanelStore'
 
 export type BrowserSessionState = {
   isOpen: boolean
@@ -39,9 +40,17 @@ const withNav = (s: BrowserSessionState): BrowserSessionState => ({
 
 export const useBrowserPanelStore = create<BrowserPanelState>((set) => ({
   bySession: {},
-  open: (sessionId, url) => set((st) => ({
-    bySession: { ...st.bySession, [sessionId]: { ...empty(url), loading: true } },
-  })),
+  open: (sessionId, url) => {
+    set((st) => ({
+      bySession: { ...st.bySession, [sessionId]: { ...empty(url), loading: true } },
+    }))
+    // The browser is one mode of the unified workbench: opening a previewable
+    // link / localhost url surfaces the workbench in BROWSER mode. Import is
+    // one-directional (workspacePanelStore never imports this store), so no cycle.
+    const workspacePanel = useWorkspacePanelStore.getState()
+    workspacePanel.openPanel(sessionId)
+    workspacePanel.setMode(sessionId, 'browser')
+  },
   navigate: (sessionId, url) => set((st) => {
     const cur = st.bySession[sessionId] ?? empty(url)
     const history = [...cur.history.slice(0, cur.historyIndex + 1), url]

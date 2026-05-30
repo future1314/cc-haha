@@ -62,14 +62,19 @@ export function TabBar() {
   const openProjectPath = isActiveSessionTab && activeSession?.workDirExists !== false
     ? activeSession?.workDir ?? null
     : null
-  const isWorkspacePanelOpen = useWorkspacePanelStore((state) =>
+  // The right-side panel is now a single unified "workbench" with a per-session
+  // mode (file ↔ browser). The folder/browser toolbar buttons reflect whether
+  // the panel is open in their respective mode.
+  const isWorkbenchOpen = useWorkspacePanelStore((state) =>
     activeTabId && isActiveSessionTab ? state.isPanelOpen(activeTabId) : false,
   )
+  const workbenchMode = useWorkspacePanelStore((state) =>
+    activeTabId && isActiveSessionTab ? state.getMode(activeTabId) : 'workspace',
+  )
+  const isWorkspacePanelOpen = isWorkbenchOpen && workbenchMode === 'workspace'
+  const isBrowserPanelOpen = isWorkbenchOpen && workbenchMode === 'browser'
   const isTerminalPanelOpen = useTerminalPanelStore((state) =>
     activeTabId && isActiveSessionTab ? state.isPanelOpen(activeTabId) : false,
-  )
-  const isBrowserPanelOpen = useBrowserPanelStore((state) =>
-    activeTabId && isActiveSessionTab ? Boolean(state.bySession[activeTabId]?.isOpen) : false,
   )
 
   const moveTab = useTabStore((s) => s.moveTab)
@@ -388,7 +393,15 @@ export function TabBar() {
           <ToolbarIconButton
             icon={isWorkspacePanelOpen ? <FolderOpen size={18} strokeWidth={1.9} /> : <Folder size={18} strokeWidth={1.9} />}
             label={t(isWorkspacePanelOpen ? 'tabs.hideWorkspace' : 'tabs.showWorkspace')}
-            onClick={() => useWorkspacePanelStore.getState().togglePanel(activeTabId)}
+            onClick={() => {
+              const workbench = useWorkspacePanelStore.getState()
+              if (workbench.isPanelOpen(activeTabId) && workbench.getMode(activeTabId) === 'workspace') {
+                workbench.closePanel(activeTabId)
+              } else {
+                workbench.setMode(activeTabId, 'workspace')
+                workbench.openPanel(activeTabId)
+              }
+            }}
             active={isWorkspacePanelOpen}
           />
         )}
@@ -397,9 +410,18 @@ export function TabBar() {
             icon={<Globe size={17} strokeWidth={1.9} />}
             label={t(isBrowserPanelOpen ? 'tabs.hideBrowser' : 'tabs.showBrowser')}
             onClick={() => {
+              const workbench = useWorkspacePanelStore.getState()
+              if (workbench.isPanelOpen(activeTabId) && workbench.getMode(activeTabId) === 'browser') {
+                workbench.closePanel(activeTabId)
+                return
+              }
               const browser = useBrowserPanelStore.getState()
-              if (browser.bySession[activeTabId]?.isOpen) {
-                browser.close(activeTabId)
+              const existing = browser.bySession[activeTabId]
+              if (existing) {
+                // Re-surface the workbench in browser mode at the last url
+                // without resetting history. (browser.open resets history.)
+                workbench.setMode(activeTabId, 'browser')
+                workbench.openPanel(activeTabId)
               } else {
                 browser.open(activeTabId, 'http://localhost:5173/')
               }

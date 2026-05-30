@@ -12,7 +12,6 @@ import { useChatStore } from '../stores/chatStore'
 import { useCLITaskStore } from '../stores/cliTaskStore'
 import { useTeamStore } from '../stores/teamStore'
 import { useWorkspacePanelStore } from '../stores/workspacePanelStore'
-import { useBrowserPanelStore } from '../stores/browserPanelStore'
 import {
   TERMINAL_PANEL_DEFAULT_HEIGHT,
   TERMINAL_PANEL_MAX_HEIGHT,
@@ -24,8 +23,7 @@ import { MessageList } from '../components/chat/MessageList'
 import { ChatInput } from '../components/chat/ChatInput'
 import { ComputerUsePermissionModal } from '../components/chat/ComputerUsePermissionModal'
 import { SessionTaskBar } from '../components/chat/SessionTaskBar'
-import { WorkspacePanel } from '../components/workspace/WorkspacePanel'
-import { BrowserSurface } from '../components/browser/BrowserSurface'
+import { WorkbenchPanel } from '../components/workbench/WorkbenchPanel'
 import { TeamStatusBar } from '../components/teams/TeamStatusBar'
 import { TerminalSettings } from './TerminalSettings'
 import type { SessionListItem } from '../types/session'
@@ -278,17 +276,12 @@ export function ActiveSession() {
   const memberInfo = useTeamStore((s) => activeTabId ? s.getMemberBySessionId(activeTabId) : null)
   const activeTeam = useTeamStore((s) => s.activeTeam)
   const isMemberSession = !!memberInfo
-  const showWorkspacePanel = useWorkspacePanelStore((state) =>
+  const showWorkbench = useWorkspacePanelStore((state) =>
     activeTabId && isSessionTabState(activeTabId, activeTabType) && !isMemberSession && !isMobileLayout
       ? state.isPanelOpen(activeTabId)
       : false,
   )
-  const showBrowserPanel = useBrowserPanelStore((state) =>
-    activeTabId && isSessionTabState(activeTabId, activeTabType) && !isMemberSession && !isMobileLayout
-      ? Boolean(state.bySession[activeTabId]?.isOpen)
-      : false,
-  )
-  const showRightPanel = showWorkspacePanel || showBrowserPanel
+  const showRightPanel = showWorkbench
   const rightPanelWidth = useWorkspacePanelStore((state) => state.width)
   const showTerminalPanel = useTerminalPanelStore((state) =>
     activeTabId && isSessionTabState(activeTabId, activeTabType) && !isMemberSession && !isMobileLayout
@@ -543,21 +536,16 @@ export function ActiveSession() {
           ) : null}
         </div>
 
-        {showBrowserPanel ? (
+        {showWorkbench ? (
           <>
             <WorkspaceResizeHandle />
             <aside
-              data-testid="browser-panel"
+              data-testid="workbench-panel"
               className="flex h-full shrink-0 flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)]"
               style={{ width: rightPanelWidth, maxWidth: '62%', minWidth: 'min(420px, 54%)' }}
             >
-              <BrowserSurface sessionId={activeTabId} />
+              <WorkbenchPanel sessionId={activeTabId} />
             </aside>
-          </>
-        ) : showWorkspacePanel ? (
-          <>
-            <WorkspaceResizeHandle />
-            <WorkspacePanel sessionId={activeTabId} />
           </>
         ) : null}
       </div>
