@@ -151,13 +151,15 @@ describe('captureAnnotatedRegion', () => {
     const ctx = makeMockCtx()
     html2canvasMock.mockImplementation(async () => {
       const overlay = document.querySelector('[data-preview-selection-annotation="true"]') as HTMLElement | null
+      const badge = document.querySelector('[data-preview-selection-badge="true"]') as HTMLElement | null
       expect(overlay).not.toBeNull()
+      expect(badge).not.toBeNull()
       expect(overlay?.style.position).toBe('fixed')
       expect(overlay?.style.left).toBe('900px')
       expect(overlay?.style.top).toBe('320px')
       expect(overlay?.style.width).toBe('86px')
       expect(overlay?.style.height).toBe('48px')
-      expect(overlay?.textContent).toContain('1')
+      expect(badge?.textContent).toContain('1')
       return {
         getContext: () => ctx as unknown as CanvasRenderingContext2D,
         toDataURL: () => 'data:image/png;base64,RAW',
@@ -175,7 +177,35 @@ describe('captureAnnotatedRegion', () => {
     await captureAnnotatedRegion(el, 1)
 
     expect(ctx.arc).not.toHaveBeenCalled()
-    expect(document.querySelector('[data-preview-selection-annotation="true"]')).toBeNull()
+    expect(document.querySelector('[data-preview-selection-annotation-root="true"]')).toBeNull()
+  })
+
+  it('places the numbered badge outside the selected element so small buttons stay readable', async () => {
+    html2canvasMock.mockImplementation(async () => {
+      const overlay = document.querySelector('[data-preview-selection-annotation="true"]') as HTMLElement | null
+      const badge = document.querySelector('[data-preview-selection-badge="true"]') as HTMLElement | null
+      expect(overlay).not.toBeNull()
+      expect(badge).not.toBeNull()
+      expect(badge?.style.position).toBe('fixed')
+      expect(Number.parseFloat(badge?.style.top ?? '0') + 26).toBeLessThanOrEqual(320)
+      expect(badge?.style.color).toBe('white')
+      expect(badge?.style.background).toBe('rgb(47, 123, 255)')
+      expect(overlay?.textContent).not.toContain('1')
+      return {
+        getContext: () => makeMockCtx() as unknown as CanvasRenderingContext2D,
+        toDataURL: () => 'data:image/png;base64,RAW',
+      }
+    })
+    const el = document.createElement('button')
+    vi.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+      left: 900, top: 320, width: 86, height: 48,
+      right: 986, bottom: 368, x: 900, y: 320,
+      toJSON: () => ({}),
+    } as DOMRect)
+
+    await captureAnnotatedRegion(el, 1)
+
+    expect(document.querySelector('[data-preview-selection-badge="true"]')).toBeNull()
   })
 
   it('returns the compressed wrapper of the canvas dataURL', async () => {
