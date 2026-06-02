@@ -78,6 +78,7 @@ vi.mock('../hooks/useMobileViewport', () => ({
 
 vi.mock('../lib/desktopRuntime', () => ({
   isTauriRuntime: () => mocks.isTauriRuntime,
+  isDesktopRuntime: () => mocks.isTauriRuntime,
 }))
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({
@@ -220,6 +221,7 @@ describe('EmptySession', () => {
 
   afterEach(() => {
     cleanup()
+    Reflect.deleteProperty(window, 'desktopHost')
     useSessionStore.setState(initialSessionState, true)
     useChatStore.setState(initialChatState, true)
     useTabStore.setState(initialTabState, true)
@@ -457,6 +459,27 @@ describe('EmptySession', () => {
 
   it('uses native desktop file paths for draft attachments', async () => {
     mocks.isTauriRuntime = true
+    window.desktopHost = {
+      kind: 'electron',
+      isDesktop: true,
+      capabilities: {
+        appMode: false,
+        dialogs: true,
+        notifications: false,
+        previewWebview: false,
+        shell: false,
+        terminal: false,
+        updates: false,
+        windowControls: false,
+        zoom: false,
+      },
+      dialogs: {
+        open: mocks.dialogOpen,
+      },
+      webview: {
+        onDragDropEvent: vi.fn().mockResolvedValue(mocks.webviewUnlisten),
+      },
+    } as any
     mocks.dialogOpen.mockResolvedValueOnce([
       'C:\\Users\\Nanmi\\Desktop\\huge-a.log',
       '/Users/nanmi/tmp/huge-b.zip',

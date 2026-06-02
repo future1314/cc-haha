@@ -19,7 +19,8 @@ import { ContextUsageIndicator } from '../components/chat/ContextUsageIndicator'
 import { FileSearchMenu, type FileSearchMenuHandle } from '../components/chat/FileSearchMenu'
 import { LocalSlashCommandPanel, type LocalSlashCommandName } from '../components/chat/LocalSlashCommandPanel'
 import { useMobileViewport } from '../hooks/useMobileViewport'
-import { isTauriRuntime } from '../lib/desktopRuntime'
+import { isDesktopRuntime } from '../lib/desktopRuntime'
+import { publicAssetPath } from '../lib/publicAsset'
 import {
   filesToComposerAttachments,
   selectNativeFileAttachments,
@@ -123,7 +124,7 @@ export function EmptySession() {
     ? `${draftRuntimeSelection.providerId ?? 'official'}:${draftRuntimeSelection.modelId}:${draftRuntimeSelection.effortLevel ?? 'auto'}`
     : undefined
   const draftModelLabel = draftRuntimeSelection?.modelId ?? currentModel?.name ?? currentModel?.id
-  const isMobileComposer = useMobileViewport() && !isTauriRuntime()
+  const isMobileComposer = useMobileViewport() && !isDesktopRuntime()
 
   useEffect(() => {
     textareaRef.current?.focus()
@@ -501,9 +502,9 @@ export function EmptySession() {
   })
 
   const openAttachmentPicker = useCallback(() => {
-    if (!isTauriRuntime()) {
+    setPlusMenuOpen(false)
+    if (!isDesktopRuntime()) {
       fileInputRef.current?.click()
-      setPlusMenuOpen(false)
       return
     }
 
@@ -517,7 +518,6 @@ export function EmptySession() {
         }
         fileInputRef.current?.click()
       })
-      .finally(() => setPlusMenuOpen(false))
   }, [])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -569,7 +569,7 @@ export function EmptySession() {
           isMobileComposer ? 'max-w-[300px]' : 'max-w-md'
         }`}>
           <img
-            src="/app-icon.png"
+            src={publicAssetPath('app-icon.png')}
             alt="Claude Code Haha"
             className={isMobileComposer ? 'mb-4 h-16 w-16' : 'mb-6 h-24 w-24'}
           />

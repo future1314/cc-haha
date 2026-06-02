@@ -35,7 +35,7 @@ import {
   resolveSlashUiAction,
 } from './composerUtils'
 import { useMobileViewport } from '../../hooks/useMobileViewport'
-import { isTauriRuntime } from '../../lib/desktopRuntime'
+import { isDesktopRuntime } from '../../lib/desktopRuntime'
 import {
   filesToComposerAttachments,
   selectNativeFileAttachments,
@@ -86,7 +86,7 @@ function insertComposerTokenAtRange(value: string, start: number, end: number, t
 
 export function ChatInput({ variant = 'default', compact = false }: ChatInputProps) {
   const t = useTranslation()
-  const isMobileComposer = useMobileViewport() && !isTauriRuntime()
+  const isMobileComposer = useMobileViewport() && !isDesktopRuntime()
   const [input, setInput] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [plusMenuOpen, setPlusMenuOpen] = useState(false)
@@ -832,9 +832,9 @@ export function ChatInput({ variant = 'default', compact = false }: ChatInputPro
   })
 
   const openAttachmentPicker = useCallback(() => {
-    if (!isTauriRuntime()) {
+    setPlusMenuOpen(false)
+    if (!isDesktopRuntime()) {
       fileInputRef.current?.click()
-      setPlusMenuOpen(false)
       return
     }
 
@@ -848,7 +848,6 @@ export function ChatInput({ variant = 'default', compact = false }: ChatInputPro
         }
         fileInputRef.current?.click()
       })
-      .finally(() => setPlusMenuOpen(false))
   }, [setComposerAttachments])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
