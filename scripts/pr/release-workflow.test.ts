@@ -47,6 +47,19 @@ describe('release desktop workflow', () => {
     }
   })
 
+  test('development desktop artifacts exclude unpacked macOS app bundles', () => {
+    const workflow = readFileSync('.github/workflows/build-desktop-dev.yml', 'utf8')
+    const collectStep = workflow.match(
+      /- name: Collect artifacts[\s\S]*?(?:\n\s{6}- name:|$)/,
+    )?.[0]
+
+    expect(collectStep).toContain('*.dmg')
+    expect(collectStep).toContain('*.zip')
+    expect(collectStep).toContain('*.blockmap')
+    expect(collectStep).toContain('*.yml')
+    expect(collectStep).not.toContain('-type d -name "*.app"')
+  })
+
   test('desktop package includes Linux deb metadata required by electron-builder', () => {
     const desktopPackage = JSON.parse(readFileSync('desktop/package.json', 'utf8')) as {
       description?: string

@@ -121,10 +121,10 @@ jobs:
         run: |
           STAGING="desktop/build-artifacts/ci-Claude-Code-Haha-v${{ steps.version.outputs.version }}-${{ matrix.artifact_name }}"
           mkdir -p "$STAGING"
-          find desktop/build-artifacts/electron -maxdepth 2 \
-            \( -type f \( -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.zip" -o -name "*.blockmap" -o -name "*.yml" \) \) -o \
-            \( -type d -name "*.app" \) | while read -r artifact; do
-              cp -R "$artifact" "$STAGING/"
+          find desktop/build-artifacts/electron -maxdepth 1 -type f \
+            \( -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.zip" -o -name "*.blockmap" -o -name "*.yml" \) \
+            | while read -r artifact; do
+              cp -f "$artifact" "$STAGING/"
             done
           echo "staging_dir=$STAGING" >> "$GITHUB_OUTPUT"
           ls -lh "$STAGING/" 2>/dev/null || true
